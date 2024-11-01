@@ -1,4 +1,4 @@
-package huffman.def;
+   package huffman.def;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
