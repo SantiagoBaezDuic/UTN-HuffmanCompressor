@@ -7,7 +7,7 @@ import huffman.def.BitReader;
 public class BitReaderImple implements BitReader
 {
 	private InputStream is;
-	private int buffer;
+	private String buffer;
 	private int bufferCount;
 	@Override
 	public void using(InputStream is)
@@ -20,15 +20,16 @@ public class BitReaderImple implements BitReader
 	@Override
 	public int readBit()
 	{
-		int num = -1;
+		int num = 9;
 		if(bufferCount == 0) {
 			try {
-				int x = is.read();
-				if(x == -1) {
-					num = x;
+				String binString = Integer.toBinaryString(is.read());
+				System.out.print("read " + binString);
+				 if(binString == "-1") {
+					buffer = binString;
 					bufferCount = -1;
 				} else {
-					//seguir
+					buffer = binString;
 					bufferCount = 8;
 				}
 			} catch(IOException e) {
