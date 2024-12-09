@@ -19,11 +19,11 @@ public class Factory
 
 	public static Compresor getCompresor()
 	{
-		return null;
+		return new CompressorImple();
 	}
 	
 	public static Descompresor getDescompresor()
 	{
-		return null;
+		return new DecompressorImple();
 	}
 }
