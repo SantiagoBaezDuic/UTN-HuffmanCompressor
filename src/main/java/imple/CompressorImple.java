@@ -65,7 +65,7 @@ public class CompressorImple implements Compresor {
             System.out.print("Error reading file:" + err.getMessage());
         }
 
-        HuffmanTable[] huffmanArray = new HuffmanTable[tableArray.size()];
+        HuffmanTable[] huffmanArray = new HuffmanTable[tableAList.size()];
         tableAList.toArray(huffmanArray);
         return huffmanArray;
     };
