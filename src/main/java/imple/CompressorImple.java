@@ -1,5 +1,6 @@
 package imple;
 
+import huffman.def.BitWriter;
 import huffman.util.Console;
 
 import huffman.def.Compresor;
@@ -8,10 +9,9 @@ import huffman.def.HuffmanTable;
 import huffman.util.HuffmanTree;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.io.FileOutputStream;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 public class CompressorImple implements Compresor {
 
@@ -72,16 +72,16 @@ public class CompressorImple implements Compresor {
         HuffmanTable[] huffmanArray = new HuffmanTable[tableAList.size()];
         tableAList.toArray(huffmanArray);
         return huffmanArray;
-    };
+    }
 
     // Retorna una lista ordenada donde cada nodo representa a cada byte del archivo
-    public List<HuffmanInfo> crearListaEnlazada(HuffmanTable arr[]){
+    public List<HuffmanInfo> crearListaEnlazada(HuffmanTable[] arr){
         Console console = Console.get();
         console.println("Creando lista enlazada...");
         ArrayList<HuffmanTable> huffmanAList = new ArrayList<>(Arrays.asList(arr)); //ArrayList de partida
         List<HuffmanInfo> huffmanList = new LinkedList<>(); //Lista enlazada que va a ser retornada.
 
-        huffmanAList.sort((e1, e2) -> Integer.compare(e1.getN(), e2.getN())); //Ordeno la lista según cantidad ascendente de ocurrencias
+        huffmanAList.sort(Comparator.comparingInt(HuffmanTable::getN)); //Ordeno la lista según cantidad ascendente de ocurrencias
 
         for (int i = 0; i < 256; i++){
             HuffmanTable currentNode = huffmanAList.get(i); //Leo el nodo
@@ -89,17 +89,17 @@ public class CompressorImple implements Compresor {
             if (currentNode.getN() != 0){ //Si el byte tiene alguna ocurrencia
                 leavesAmount++;
                 String code = currentNode.getCod(); //Leo el byte asociado
-                int c = (int)(code.charAt(0)); //Transformo el byte a su expresión en ASCII
+                int c = (code.charAt(0)); //Transformo el byte a su expresión en ASCII
                 HuffmanInfo huffmanInfo = new HuffmanInfo(c, currentNode.getN()); //Junto la expresión con la # de ocurrencias
                 huffmanList.add(huffmanInfo); //Añado la hoja/nodo a la lista enlazada
             }
         }
         console.println("Lista enlazada creada con éxito!");
         return huffmanList;
-    };
+    }
 
     private static void orderedInsert(List<HuffmanInfo> lista, HuffmanInfo node){
-        Boolean alreadyInserted = false; //Para saber si ya fue insertado y el proceso debe parar
+        boolean alreadyInserted = false; //Para saber si ya fue insertado y el proceso debe parar
         for (int i = 0; i <= lista.size() && !alreadyInserted; i++){
             if (i == lista.size()){ // Si alcanzamos el final de la lista, inserto el nodo al final
                 lista.add(node);
@@ -127,21 +127,177 @@ public class CompressorImple implements Compresor {
         HuffmanInfo rootNode = lista.get(0); //Selecciono el único nodo que quedó en el árbol (el nodo raíz)
         c.println("Árbol creado con éxito!");
         return rootNode;
-    };
+    }
 
     // Recorre el árbol Huffman y completa los códigos en el array
-    public void generarCodigosHuffman(HuffmanInfo root,HuffmanTable arr[]){
+    public void generarCodigosHuffman(HuffmanInfo root, HuffmanTable[] arr){
         HuffmanTree huffmanTree = new HuffmanTree(root);
-        
-    };
+        StringBuffer sBuff = new StringBuffer();
+        HuffmanInfo currentLeave = huffmanTree.next(sBuff);
+        List<HuffmanTable> huffmanList = new ArrayList<>(Arrays.asList(arr));
+
+        Console c = Console.get();
+        c.println("Generando códigos Huffman: %" + 0);
+
+        long currentProgress = 0;
+
+        long currentLeavesAmount = 0;
+
+        while (currentLeave != null) {
+            currentLeavesAmount++;
+            long newPercentage = (currentLeavesAmount * 100) / leavesAmount;
+
+            if (newPercentage > currentProgress){
+                c.println("Generando códigos Huffman: %" + newPercentage);
+                currentProgress = newPercentage;
+            }
+
+            HuffmanTable huffmanTable = huffmanList.get(currentLeave.getC());
+            String code = sBuff.toString();
+            huffmanTable.setCod(code);
+
+            currentLeave = huffmanTree.next(sBuff);
+        }
+
+        c.println("Códigos Huffman generados con éxito!");
+
+        huffmanList.toArray(arr);
+    }
 
     // Escribe el encabezado en el archivo filename+".huf", y retorna cuántos bytes ocupa el encabezado
-    public long escribirEncabezado(String filename,HuffmanTable arr[]){
-        return 0;
-    };
+    public long escribirEncabezado(String filename, HuffmanTable[] arr){
+        List<HuffmanTable> huffmanAList = new ArrayList<>(Arrays.asList(arr));
+        String outputFile = filename + ".huf"; //Se agrega la extensión nueva
+
+        Console c = Console.get();
+        c.println("Escribiendo encabezados: %0");
+
+        long progress = 0; //Variable para seguir el progreso
+
+        try {
+            //Abro el outputstream y el bufferedoutputstream para poder escribir el archivo sin tantas búsquedas
+            OutputStream oStream = new FileOutputStream(outputFile);
+            BufferedOutputStream bStream = new BufferedOutputStream(oStream);
+
+            bStream.write(leavesAmount); //Escribo la cantidad de hojas
+
+            long leavesWritten = 0; //Variable para seguir el progreso
+
+            for (int i = 0; i < 256; i++){ //Recorro el arraylist
+                HuffmanTable huffmanTable = huffmanAList.get(i); //Obtengo el elemento
+
+                if (huffmanTable.getN() > 0){ // Si hay ocurrencias y merece escribirse
+                    leavesWritten++;
+                    long percentage = (leavesWritten * 100) / leavesAmount;
+                    if (percentage > progress){
+                        c.println("Escribiendo encabezados: %" + percentage);
+                        progress = percentage;
+                    }
+
+                    bStream.write(i);
+                    String codString = huffmanTable.getCod();
+                    int h = codString.length();
+                    bStream.write(h);
+                    BitWriter writer = Factory.getBitWriter();
+                    writer.using(bStream);
+
+                    for (int x = 0; x < h; x++){ //Escribir el bit correspondiente, todas las veces que haga falta según la longitud del código Huffman
+                        char bit = codString.charAt(x);
+                        if (bit == '0'){
+                            writer.writeBit(0);
+                        } else {
+                            writer.writeBit(1);
+                        }
+                    }
+
+                    //Se completa el último byte
+                    if (h % 8 != 0){
+                        writer.flush();
+                    }
+                }
+            }
+            File originalFile = new File(filename);
+            int originalLength = (int)originalFile.length();
+            ByteBuffer bBuffer = ByteBuffer.allocate(4);
+            bBuffer.putInt(originalLength);
+            byte[] bytes = bBuffer.array();
+            bStream.write(bytes); //Escribo la longitud del archivo original
+
+            //Cierro los streams
+            bStream.close();
+            oStream.close();
+        } catch (IOException err) {
+            System.out.println("Error writing file headers: " + err.getMessage());
+        }
+        c.println("Encabezados escritos con éxito!");
+        File compressedFile = new File(outputFile);
+        return compressedFile.length();
+    }
 
     // Recorre el archivo filename por cada byte escribe su código en filename+".huf"
-    public void escribirContenido(String filename,HuffmanTable arr[]){
+    public void escribirContenido(String filename, HuffmanTable[] arr){
+        try {
+            InputStream iStream = new FileInputStream(filename);
+            BufferedInputStream buffInpStream = new BufferedInputStream(iStream);
+            String outputFilename = filename + ".huf";
+            OutputStream oStream = new FileOutputStream(outputFilename, true); //Añade al final del archivo
+            BufferedOutputStream bStream = new BufferedOutputStream(oStream);
 
-    };
+            //Seteo el BitWriter
+            int currentByte = buffInpStream.read();
+            BitWriter writer = Factory.getBitWriter();
+            writer.using(bStream);
+
+            int totalBits = 0;
+            long oBytes = new File(filename).length();
+            long compressedBytes = 0;
+
+            long progress = 0;
+
+            Console c = Console.get();
+            c.println("Escribiendo contenidos: %" + 0);
+
+            List<HuffmanTable> huffmanAList = new ArrayList<>(Arrays.asList(arr));
+
+            while (currentByte >= 0){
+                compressedBytes++;
+                long percentage = (compressedBytes * 100) / oBytes;
+                if (percentage > progress){
+                    c.println("Escribiendo contenidos: %" + percentage);
+                    progress = percentage;
+                }
+
+                HuffmanTable huffmanTable = huffmanAList.get(currentByte);
+                String cod = huffmanTable.getCod();
+                int codLength = cod.length();
+                totalBits += codLength;
+
+                for (int x = 0; x < codLength; x++){
+                    char bit = cod.charAt(x);
+                    if (bit == '0'){
+                        writer.writeBit(0);
+                    } else {
+                        writer.writeBit(1);
+                    }
+                }
+
+                currentByte = buffInpStream.read();
+            }
+
+            //Se completa el último byte
+            if (totalBits % 8 != 0){
+                writer.flush();
+            }
+
+            //Cierro los streams
+            bStream.close();
+            oStream.close();
+            buffInpStream.close();
+            iStream.close();
+
+            c.println("Contenidos escritos con éxito!");
+        } catch (IOException err) {
+            System.out.println("Error writing file content: " + err.getMessage());
+        }
+    }
 }
