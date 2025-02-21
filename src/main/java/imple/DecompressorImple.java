@@ -10,8 +10,10 @@ import java.io.*;
 import java.nio.ByteBuffer;
 
 public class DecompressorImple implements Descompresor {
+
+    Console console = Console.get();
+
     public long recomponerArbol(String filename, HuffmanInfo arbol){
-        Console console = Console.get();
         console.println("Recomponiendo árbol: %" + 0);
         long headerLength = 0;
         try {
@@ -82,13 +84,12 @@ public class DecompressorImple implements Descompresor {
         return headerLength;
     }
     public void descomprimirArchivo(HuffmanInfo root,long n,String filename){
-        Console console = Console.get();
-        console.println("Descomprimiento archivo: %" + 0);
+        console.println("Descomprimiendo archivo: %" + 0);
         try{
             String originalFilename = filename.substring(0, filename.length() - 4);
             InputStream iStream = new FileInputStream(filename);
             BufferedInputStream buffInpStream = new BufferedInputStream(iStream);
-            buffInpStream.skip(n); //Skipea el header
+            buffInpStream.skip(n); //Saltea el header
             OutputStream oStream = new FileOutputStream(originalFilename);
             BufferedOutputStream bStream = new BufferedOutputStream(oStream);
 
@@ -101,12 +102,12 @@ public class DecompressorImple implements Descompresor {
             reader.using(buffInpStream);
             int bit = reader.readBit();
 
-            long decompFileLength = 0;
+            long decompressedFileLength = 0;
             HuffmanInfo huffInfoAux = root;
 
             long progress = 0;
 
-            while (bit >= 0 && oLength > decompFileLength){
+            while (bit >= 0 && oLength > decompressedFileLength){
                 if (bit == 1){
                     huffInfoAux = huffInfoAux.getRight();
                 } else {
@@ -115,8 +116,8 @@ public class DecompressorImple implements Descompresor {
                 if (huffInfoAux.getC() <= 255){
                     int c = huffInfoAux.getC();
                     bStream.write(c);
-                    decompFileLength++;
-                    long percentage = (decompFileLength * 100) / oLength;
+                    decompressedFileLength++;
+                    long percentage = (decompressedFileLength * 100) / oLength;
                     if (percentage > progress){
                         console.println("Descomprimiendo archivo: %" + percentage);
                         progress = percentage;
