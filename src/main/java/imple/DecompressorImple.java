@@ -39,7 +39,7 @@ public class DecompressorImple implements Descompresor {
 
                 int node1 = bStream.read();
                 int node2 = bStream.read();
-                long byteAmount = (node2 / 8) * 2;
+                long byteAmount = (node2 / 8) + 2;
                 headerLength += byteAmount;
                 StringBuilder cod = new StringBuilder();
 
@@ -51,7 +51,7 @@ public class DecompressorImple implements Descompresor {
                 HuffmanInfo aux = arbol;
                 for (int x = 0; x < node2; x++){
                     char bit = cod.charAt(x);
-                    if (bit == '0'){
+                    if (bit == '1'){
                         if (aux.getRight() == null){
                             HuffmanInfo r = new HuffmanInfo(auxID, 0);
                             auxID++;
