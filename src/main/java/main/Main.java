@@ -11,11 +11,12 @@ import imple.Factory;
 
 public class Main {
 
+    static Console console = Console.get();
+
     static private String fileSelect(){
-        Console c = Console.get();
-        c.println("Seleccione el archivo a comprimir/descomprimir.");
-        String selectedFile = c.fileExplorer();
-        c.println("Usted ha seleccionado el archivo: " + selectedFile);
+        console.println("Seleccione el archivo a comprimir/descomprimir.");
+        String selectedFile = console.fileExplorer();
+        console.println("Usted ha seleccionado el archivo: " + selectedFile);
         return selectedFile;
     }
 
@@ -27,6 +28,7 @@ public class Main {
         compressor.generarCodigosHuffman(rootNode, huffmanArray);
         compressor.escribirEncabezado(fileName, huffmanArray);
         compressor.escribirContenido(fileName, huffmanArray);
+        console.println("Compresión finalizada.");
     }
 
     static private void decompressFile(String fileName){
@@ -34,17 +36,17 @@ public class Main {
         HuffmanInfo huffmanInfo = new HuffmanInfo(256, 0);
         long n = decompressor.recomponerArbol(fileName, huffmanInfo);
         decompressor.descomprimirArchivo(huffmanInfo, n, fileName);
+        console.println("Descompresión finalizada.");
     }
 
     public static void main(String[] args) {
         String fileName = fileSelect();
-        Console c = Console.get();
 
         if (fileName.endsWith(".huf")){
-            c.println("Comenzando descompresión");
+            console.println("Comenzando descompresión");
             decompressFile(fileName);
         } else {
-            c.println("Comenzando compresión");
+            console.println("Comenzando compresión");
             compressFile(fileName);
         }
     }

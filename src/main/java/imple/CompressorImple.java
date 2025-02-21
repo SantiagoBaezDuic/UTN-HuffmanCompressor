@@ -105,7 +105,7 @@ public class CompressorImple implements Compresor {
                 lista.add(node);
                 alreadyInserted = true; // Detengo el proceso
             } else if (node.getN() < lista.get(i).getN()) { //Si la cantidad de ocurrencias es menor que la del nodo siguiente, inserto el nodo
-                lista.add(node);
+                lista.add(i, node);
                 alreadyInserted = true;
             }
         }
@@ -115,7 +115,7 @@ public class CompressorImple implements Compresor {
     public HuffmanInfo convertirListaEnArbol(List<HuffmanInfo> lista){
         Console c = Console.get();
         c.println("Convirtiendo lista en árbol...");
-        for (int i=256; lista.size() != 1; i++){
+        for (int i = 256; lista.size() != 1; i++){
             HuffmanInfo a = lista.remove(0); //Elimino el primer nodo
             HuffmanInfo b = lista.remove(0); //Elimino el segundo nodo
             int newNodeAmount = a.getN() + b.getN(); //Sumo las ocurrencias
@@ -133,7 +133,7 @@ public class CompressorImple implements Compresor {
     public void generarCodigosHuffman(HuffmanInfo root, HuffmanTable[] arr){
         HuffmanTree huffmanTree = new HuffmanTree(root);
         StringBuffer sBuff = new StringBuffer();
-        HuffmanInfo currentLeave = huffmanTree.next(sBuff);
+        HuffmanInfo currentLeaf = huffmanTree.next(sBuff);
         List<HuffmanTable> huffmanList = new ArrayList<>(Arrays.asList(arr));
 
         Console c = Console.get();
@@ -143,7 +143,7 @@ public class CompressorImple implements Compresor {
 
         long currentLeavesAmount = 0;
 
-        while (currentLeave != null) {
+        while (currentLeaf != null) {
             currentLeavesAmount++;
             long newPercentage = (currentLeavesAmount * 100) / leavesAmount;
 
@@ -152,11 +152,11 @@ public class CompressorImple implements Compresor {
                 currentProgress = newPercentage;
             }
 
-            HuffmanTable huffmanTable = huffmanList.get(currentLeave.getC());
+            HuffmanTable huffmanTable = huffmanList.get(currentLeaf.getC());
             String code = sBuff.toString();
             huffmanTable.setCod(code);
 
-            currentLeave = huffmanTree.next(sBuff);
+            currentLeaf = huffmanTree.next(sBuff);
         }
 
         c.println("Códigos Huffman generados con éxito!");
@@ -196,12 +196,12 @@ public class CompressorImple implements Compresor {
 
                     bStream.write(i);
                     String codString = huffmanTable.getCod();
-                    int h = codString.length();
-                    bStream.write(h);
+                    int codLength = codString.length();
+                    bStream.write(codLength);
                     BitWriter writer = Factory.getBitWriter();
                     writer.using(bStream);
 
-                    for (int x = 0; x < h; x++){ //Escribir el bit correspondiente, todas las veces que haga falta según la longitud del código Huffman
+                    for (int x = 0; x < codLength; x++){ //Escribir el bit correspondiente, todas las veces que haga falta según la longitud del código Huffman
                         char bit = codString.charAt(x);
                         if (bit == '0'){
                             writer.writeBit(0);
@@ -211,7 +211,7 @@ public class CompressorImple implements Compresor {
                     }
 
                     //Se completa el último byte
-                    if (h % 8 != 0){
+                    if (codLength % 8 != 0){
                         writer.flush();
                     }
                 }
