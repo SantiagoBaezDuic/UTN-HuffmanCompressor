@@ -1,6 +1,7 @@
 package imple;
 
 import huffman.util.Console;
+import huffman.util.MessageReplacer;
 
 import huffman.def.BitReader;
 import huffman.def.Descompresor;
@@ -10,11 +11,11 @@ import java.io.*;
 import java.nio.ByteBuffer;
 
 public class DecompressorImple implements Descompresor {
-
     Console console = Console.get();
 
     public long recomponerArbol(String filename, HuffmanInfo arbol){
-        console.println("Recomponiendo árbol: %" + 0);
+        String message = "Recomponiendo árbol: %";
+        console.println(MessageReplacer.replaceProgressMessage(message, 0));
         long headerLength = 0;
         try {
             InputStream iStream = new FileInputStream(filename);
@@ -35,7 +36,7 @@ public class DecompressorImple implements Descompresor {
             for (int i = 0; i < leavesAmount; i++){
                 long percentage = ((i + 1) * 100) / leavesAmount;
                 if (percentage > progress){
-                    console.println("Recomponiendo árbol: %" + percentage);
+                    console.println(MessageReplacer.replaceProgressMessage(message, percentage));
                     progress = percentage;
                 }
 
@@ -77,14 +78,15 @@ public class DecompressorImple implements Descompresor {
             }
             bStream.close();
             iStream.close();
-            console.println("Árbol recompuesto con éxito!");
+            console.println(MessageReplacer.replaceInfoMessage("Árbol recompuesto con éxito!"));
         } catch (IOException err) {
-            System.out.println("Error composing tree: " + err.getMessage());
+            System.out.println(MessageReplacer.replaceInfoMessage("Error composing tree: " + err.getMessage()));
         }
         return headerLength;
     }
     public void descomprimirArchivo(HuffmanInfo root,long n,String filename){
-        console.println("Descomprimiendo archivo: %" + 0);
+        String message = "Descomprimiendo archivo: %";
+        console.println(MessageReplacer.replaceProgressMessage(message, 0));
         try{
             String originalFilename = filename.substring(0, filename.length() - 4);
             InputStream iStream = new FileInputStream(filename);
@@ -119,7 +121,7 @@ public class DecompressorImple implements Descompresor {
                     decompressedFileLength++;
                     long percentage = (decompressedFileLength * 100) / oLength;
                     if (percentage > progress){
-                        console.println("Descomprimiendo archivo: %" + percentage);
+                        console.println(MessageReplacer.replaceProgressMessage(message, percentage));
                         progress = percentage;
                     }
                     huffInfoAux = root;
@@ -130,12 +132,12 @@ public class DecompressorImple implements Descompresor {
             oStream.close();
             buffInpStream.close();
             iStream.close();
-            console.println("Archivo descomprimido con éxito!");
-            console.println("Proceso finalizado, presione cualquier tecla...");
+            console.println(MessageReplacer.replaceInfoMessage("Archivo descomprimido con éxito!"));
+            console.println(MessageReplacer.replaceInfoMessage("Proceso finalizado, presione cualquier tecla..."));
             console.pressAnyKey();
             console.closeAndExit();
         } catch (IOException err) {
-            System.out.println("Error decompressing file: " + err.getMessage());
+            System.out.println(MessageReplacer.replaceInfoMessage("Error decompressing file: " + err.getMessage()));
         }
     }
 }

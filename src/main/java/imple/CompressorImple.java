@@ -2,6 +2,7 @@ package imple;
 
 import huffman.def.BitWriter;
 import huffman.util.Console;
+import huffman.util.MessageReplacer;
 
 import huffman.def.Compresor;
 import huffman.def.HuffmanInfo;
@@ -17,21 +18,6 @@ public class CompressorImple implements Compresor {
 
     int leavesAmount = 0; //Para llevar el conteo de las hojas del árbol
     Console console = Console.get(); //Única instancia de la consola
-
-    static StringBuilder messageContainer = new StringBuilder(); //Utilizo StringBuilder para mutar un único elemento String en lugar de crear múltiples instancias.
-
-    private static String replaceProgressMessage(String baseMessage, long percentage){
-        messageContainer.setLength(0);
-        messageContainer.append(baseMessage);
-        messageContainer.append(percentage);
-        return messageContainer.toString();
-    }
-
-    private static String replaceProgressMessage(String newMessage){
-        messageContainer.setLength(0);
-        messageContainer.append(newMessage);
-        return messageContainer.toString();
-    }
 
     @Override
     // Recorre el archivo y retorna un HuffmanTable[256] contando cuántas veces aparece cada byte
@@ -63,7 +49,7 @@ public class CompressorImple implements Compresor {
 //Instancia de la consola.
             long currentProgress = 0;
             String message = "Contando ocurrencias: %";
-            console.println(replaceProgressMessage(message, 0)); //%0
+            console.println(MessageReplacer.replaceProgressMessage(message, 0)); //%0
 
             while (currentByte != -1){ //Mientras el byte no sea -1 (fin del archivo)
                 tableAList.get(currentByte).increment(); //Suma una ocurrencia a la tabla correspondiente.
@@ -72,7 +58,7 @@ public class CompressorImple implements Compresor {
                 long newPercentage = (currentlyRead * 100) / totalSize;
 
                 if (newPercentage > currentProgress){ //Si el porcentaje se tiene que actualizar lo muestro por consola
-                    console.println(replaceProgressMessage(message, newPercentage));
+                    console.println(MessageReplacer.replaceProgressMessage(message, newPercentage));
                     currentProgress = newPercentage;
                 }
 
@@ -82,7 +68,7 @@ public class CompressorImple implements Compresor {
             bStream.close();
             iStream.close();
         } catch (IOException err) { //Error handling
-            System.out.print("Error reading file:" + err.getMessage());
+            System.out.print(MessageReplacer.replaceInfoMessage("Error reading file:" + err.getMessage()));
         }
 
         HuffmanTable[] huffmanArray = new HuffmanTable[tableAList.size()];
@@ -92,7 +78,7 @@ public class CompressorImple implements Compresor {
 
     // Retorna una lista ordenada donde cada nodo representa a cada byte del archivo
     public List<HuffmanInfo> crearListaEnlazada(HuffmanTable[] arr){
-        console.println(replaceProgressMessage("Creando lista enlazada..."));
+        console.println(MessageReplacer.replaceInfoMessage("Creando lista enlazada..."));
         ArrayList<HuffmanTable> huffmanAList = new ArrayList<>(Arrays.asList(arr)); //ArrayList de partida
         List<HuffmanInfo> huffmanList = new LinkedList<>(); //Lista enlazada que va a ser retornada.
 
@@ -109,7 +95,7 @@ public class CompressorImple implements Compresor {
                 huffmanList.add(huffmanInfo); //Añado la hoja/nodo a la lista enlazada
             }
         }
-        console.println(replaceProgressMessage("Lista enlazada creada con éxito!"));
+        console.println(MessageReplacer.replaceInfoMessage("Lista enlazada creada con éxito!"));
         return huffmanList;
     }
 
@@ -128,7 +114,7 @@ public class CompressorImple implements Compresor {
 
     // Convierte la lista en el árbol Huffman
     public HuffmanInfo convertirListaEnArbol(List<HuffmanInfo> lista){
-        console.println(replaceProgressMessage("Convirtiendo lista en árbol..."));
+        console.println(MessageReplacer.replaceInfoMessage("Convirtiendo lista en árbol..."));
         for (int i = 256; lista.size() != 1; i++){
             HuffmanInfo a = lista.remove(0); //Elimino el primer nodo
             HuffmanInfo b = lista.remove(0); //Elimino el segundo nodo
@@ -139,7 +125,7 @@ public class CompressorImple implements Compresor {
             orderedInsert(lista, newNode);
         }
         HuffmanInfo rootNode = lista.get(0); //Selecciono el único nodo que quedó en el árbol (el nodo raíz)
-        console.println(replaceProgressMessage("Árbol creado con éxito!"));
+        console.println(MessageReplacer.replaceInfoMessage("Árbol creado con éxito!"));
         return rootNode;
     }
 
@@ -151,7 +137,7 @@ public class CompressorImple implements Compresor {
         List<HuffmanTable> huffmanList = new ArrayList<>(Arrays.asList(arr));
 
         String message = "Generando códigos Huffman: %";
-        console.println(replaceProgressMessage(message, 0));
+        console.println(MessageReplacer.replaceProgressMessage(message, 0));
 
         long currentProgress = 0;
 
@@ -162,7 +148,7 @@ public class CompressorImple implements Compresor {
             long newPercentage = (currentLeavesAmount * 100) / leavesAmount;
 
             if (newPercentage > currentProgress){
-                console.println(replaceProgressMessage(message, newPercentage));
+                console.println(MessageReplacer.replaceProgressMessage(message, newPercentage));
                 currentProgress = newPercentage;
             }
 
@@ -173,7 +159,7 @@ public class CompressorImple implements Compresor {
             currentLeaf = huffmanTree.next(sBuff);
         }
 
-        console.println(replaceProgressMessage("Códigos Huffman generados con éxito!"));
+        console.println(MessageReplacer.replaceInfoMessage("Códigos Huffman generados con éxito!"));
 
         huffmanList.toArray(arr);
     }
@@ -190,7 +176,7 @@ public class CompressorImple implements Compresor {
         String outputFile = filename + ".huf"; //Se agrega la extensión nueva
 
         String message = "Escribiendo encabezados: %";
-        console.println(replaceProgressMessage(message, 0));
+        console.println(MessageReplacer.replaceProgressMessage(message, 0));
 
         long progress = 0; //Variable para seguir el progreso
 
@@ -210,7 +196,7 @@ public class CompressorImple implements Compresor {
                     leavesWritten++;
                     long percentage = (leavesWritten * 100) / leavesAmount;
                     if (percentage > progress){
-                        console.println(replaceProgressMessage(message, percentage));
+                        console.println(MessageReplacer.replaceProgressMessage(message, percentage));
                         progress = percentage;
                     }
 
@@ -245,9 +231,9 @@ public class CompressorImple implements Compresor {
             bStream.close();
             oStream.close();
         } catch (IOException err) {
-            System.out.println("Error writing file headers: " + err.getMessage());
+            System.out.println(MessageReplacer.replaceInfoMessage("Error writing file headers: " + err.getMessage()));
         }
-        console.println(replaceProgressMessage("Encabezados escritos con éxito!"));
+        console.println(MessageReplacer.replaceInfoMessage("Encabezados escritos con éxito!"));
         File compressedFile = new File(outputFile);
         return compressedFile.length();
     }
@@ -273,7 +259,7 @@ public class CompressorImple implements Compresor {
             long progress = 0;
 
             String message = "Escribiendo contenidos: %";
-            console.println(replaceProgressMessage(message, 0));
+            console.println(MessageReplacer.replaceProgressMessage(message, 0));
 
             List<HuffmanTable> huffmanAList = new ArrayList<>(Arrays.asList(arr));
 
@@ -281,7 +267,7 @@ public class CompressorImple implements Compresor {
                 compressedBytes++;
                 long percentage = (compressedBytes * 100) / oBytes;
                 if (percentage > progress){
-                    console.println(replaceProgressMessage(message, percentage));
+                    console.println(MessageReplacer.replaceProgressMessage(message, percentage));
                     progress = percentage;
                 }
 
@@ -311,13 +297,13 @@ public class CompressorImple implements Compresor {
             buffInpStream.close();
             iStream.close();
 
-            console.println(replaceProgressMessage("Contenidos escritos con éxito!"));
-            console.println(replaceProgressMessage("Archivo comprimido con éxito!"));
-            console.println(replaceProgressMessage("Proceso finalizado, presione cualquier tecla..."));
+            console.println(MessageReplacer.replaceInfoMessage("Contenidos escritos con éxito!"));
+            console.println(MessageReplacer.replaceInfoMessage("Archivo comprimido con éxito!"));
+            console.println(MessageReplacer.replaceInfoMessage("Proceso finalizado, presione cualquier tecla..."));
             console.pressAnyKey();
             console.closeAndExit();
         } catch (IOException err) {
-            System.out.println("Error writing file content: " + err.getMessage());
+            System.out.println(MessageReplacer.replaceInfoMessage("Error writing file content: " + err.getMessage()));
         }
     }
 }
