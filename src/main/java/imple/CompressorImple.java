@@ -19,6 +19,16 @@ public class CompressorImple implements Compresor {
     int leavesAmount = 0; //Para llevar el conteo de las hojas del árbol
     Console console = Console.get(); //Única instancia de la consola
 
+    private static void createElements(ArrayList<HuffmanTable> aList){
+        for (int i = 0; i < 256; i++){
+            //Creo la tabla para cada elemento
+            HuffmanTable table = new HuffmanTable();
+            table.setN(0); //Inicializo sus ocurrencias en 0.
+            table.setCod(Character.toString((char)i)); //Asigno el código del elemento correspondiente.
+            aList.add(table);
+        }
+    }
+
     @Override
     // Recorre el archivo y retorna un HuffmanTable[256] contando cuántas veces aparece cada byte
     public HuffmanTable[] contarOcurrencias(String fileName){
@@ -27,13 +37,7 @@ public class CompressorImple implements Compresor {
 
         //Poblar el ArrayList con 256 elementos (capacidad máxima de representación del byte), de esta manera cada uno de los bytes
         // se corresponde con el index de uno de estos elementos.
-        for (int i = 0; i < 256; i++){
-            //Creo la tabla para cada elemento
-            HuffmanTable table = new HuffmanTable();
-            table.setN(0); //Inicializo sus ocurrencias en 0.
-            table.setCod(Character.toString((char)i)); //Asigno el código del elemento correspondiente.
-            tableAList.add(table);
-        }
+        createElements(tableAList);
 
         try {
             //Inicio una instancia del inputStream que va leyendo el archivo, pero utilizo bufferedInputStream, ya que hace mucho más
@@ -46,7 +50,6 @@ public class CompressorImple implements Compresor {
             File f = new File(fileName);
             long totalSize = f.length(); //Cantidad total de bytes
             long currentlyRead = 0; //Cantidad leída de bytes
-//Instancia de la consola.
             long currentProgress = 0;
             String message = "Contando ocurrencias: %";
             console.println(MessageReplacer.replaceProgressMessage(message, 0)); //%0
@@ -170,6 +173,17 @@ public class CompressorImple implements Compresor {
         }
     }
 
+    static private void writeStringData(String s, BitWriter w){
+        for (int x = 0; x < s.length(); x++){
+            char bit = s.charAt(x);
+            if (bit == '0'){
+                w.writeBit(0);
+            } else {
+                w.writeBit(1);
+            }
+        }
+    }
+
     // Escribe el encabezado en el archivo filename+".huf", y retorna cuántos bytes ocupa el encabezado
     public long escribirEncabezado(String filename, HuffmanTable[] arr){
         List<HuffmanTable> huffmanAList = new ArrayList<>(Arrays.asList(arr));
@@ -202,22 +216,14 @@ public class CompressorImple implements Compresor {
 
                     bStream.write(i);
                     String codString = huffmanTable.getCod();
-                    int codLength = codString.length();
-                    bStream.write(codLength);
+                    bStream.write(codString.length());
                     BitWriter writer = Factory.getBitWriter();
                     writer.using(bStream);
 
-                    for (int x = 0; x < codLength; x++){ //Escribir el bit correspondiente, todas las veces que haga falta según la longitud del código Huffman
-                        char bit = codString.charAt(x);
-                        if (bit == '0'){
-                            writer.writeBit(0);
-                        } else {
-                            writer.writeBit(1);
-                        }
-                    }
+                    writeStringData(codString, writer);
 
                     //Se completa el último byte
-                    byteFlusher(codLength, writer);
+                    byteFlusher(codString.length(), writer);
                 }
             }
             File originalFile = new File(filename);
@@ -273,17 +279,9 @@ public class CompressorImple implements Compresor {
 
                 HuffmanTable huffmanTable = huffmanAList.get(currentByte);
                 String cod = huffmanTable.getCod();
-                int codLength = cod.length();
-                totalBits += codLength;
+                totalBits += cod.length();
 
-                for (int x = 0; x < codLength; x++){
-                    char bit = cod.charAt(x);
-                    if (bit == '0'){
-                        writer.writeBit(0);
-                    } else {
-                        writer.writeBit(1);
-                    }
-                }
+                writeStringData(cod, writer);
 
                 currentByte = buffInpStream.read();
             }
