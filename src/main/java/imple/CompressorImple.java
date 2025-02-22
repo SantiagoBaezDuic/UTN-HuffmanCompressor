@@ -32,6 +32,7 @@ public class CompressorImple implements Compresor {
     @Override
     // Recorre el archivo y retorna un HuffmanTable[256] contando cuántas veces aparece cada byte
     public HuffmanTable[] contarOcurrencias(String fileName){
+        long iT = System.currentTimeMillis();
         //Creo el ArrayList de tablas, lo uso en lugar de un Array por más comodidad a la hora de manejarlo
         ArrayList<HuffmanTable> tableAList = new ArrayList<>();
 
@@ -76,11 +77,14 @@ public class CompressorImple implements Compresor {
 
         HuffmanTable[] huffmanArray = new HuffmanTable[tableAList.size()];
         tableAList.toArray(huffmanArray);
+        long fT = System.currentTimeMillis();
+        console.println(MessageReplacer.replaceInfoMessage("Ocurrencias contadas en " + (fT-iT) + " milisegundos."));
         return huffmanArray;
     }
 
     // Retorna una lista ordenada donde cada nodo representa a cada byte del archivo
     public List<HuffmanInfo> crearListaEnlazada(HuffmanTable[] arr){
+        long iT = System.currentTimeMillis();
         console.println(MessageReplacer.replaceInfoMessage("Creando lista enlazada..."));
         ArrayList<HuffmanTable> huffmanAList = new ArrayList<>(Arrays.asList(arr)); //ArrayList de partida
         List<HuffmanInfo> huffmanList = new LinkedList<>(); //Lista enlazada que va a ser retornada.
@@ -99,6 +103,8 @@ public class CompressorImple implements Compresor {
             }
         }
         console.println(MessageReplacer.replaceInfoMessage("Lista enlazada creada con éxito!"));
+        long fT = System.currentTimeMillis();
+        console.println(MessageReplacer.replaceInfoMessage("Lista enlazada creada en " + (fT-iT) + " milisegundos."));
         return huffmanList;
     }
 
@@ -117,6 +123,7 @@ public class CompressorImple implements Compresor {
 
     // Convierte la lista en el árbol Huffman
     public HuffmanInfo convertirListaEnArbol(List<HuffmanInfo> lista){
+        long iT = System.currentTimeMillis();
         console.println(MessageReplacer.replaceInfoMessage("Convirtiendo lista en árbol..."));
         for (int i = 256; lista.size() != 1; i++){
             HuffmanInfo a = lista.remove(0); //Elimino el primer nodo
@@ -129,11 +136,14 @@ public class CompressorImple implements Compresor {
         }
         HuffmanInfo rootNode = lista.get(0); //Selecciono el único nodo que quedó en el árbol (el nodo raíz)
         console.println(MessageReplacer.replaceInfoMessage("Árbol creado con éxito!"));
+        long fT = System.currentTimeMillis();
+        console.println(MessageReplacer.replaceInfoMessage("Árbol creado en " + (fT-iT) + " milisegundos."));
         return rootNode;
     }
 
     // Recorre el árbol Huffman y completa los códigos en el array
     public void generarCodigosHuffman(HuffmanInfo root, HuffmanTable[] arr){
+        long iT = System.currentTimeMillis();
         HuffmanTree huffmanTree = new HuffmanTree(root);
         StringBuffer sBuff = new StringBuffer();
         HuffmanInfo currentLeaf = huffmanTree.next(sBuff);
@@ -163,6 +173,8 @@ public class CompressorImple implements Compresor {
         }
 
         console.println(MessageReplacer.replaceInfoMessage("Códigos Huffman generados con éxito!"));
+        long fT = System.currentTimeMillis();
+        console.println(MessageReplacer.replaceInfoMessage("Códigos creados en " + (fT-iT) + " milisegundos."));
 
         huffmanList.toArray(arr);
     }
@@ -186,6 +198,7 @@ public class CompressorImple implements Compresor {
 
     // Escribe el encabezado en el archivo filename+".huf", y retorna cuántos bytes ocupa el encabezado
     public long escribirEncabezado(String filename, HuffmanTable[] arr){
+        long iT = System.currentTimeMillis();
         List<HuffmanTable> huffmanAList = new ArrayList<>(Arrays.asList(arr));
         String outputFile = filename + ".huf"; //Se agrega la extensión nueva
 
@@ -240,12 +253,15 @@ public class CompressorImple implements Compresor {
             System.out.println(MessageReplacer.replaceInfoMessage("Error writing file headers: " + err.getMessage()));
         }
         console.println(MessageReplacer.replaceInfoMessage("Encabezados escritos con éxito!"));
+        long fT = System.currentTimeMillis();
+        console.println(MessageReplacer.replaceInfoMessage("Encabezados escritos en " + (fT-iT) + " milisegundos."));
         File compressedFile = new File(outputFile);
         return compressedFile.length();
     }
 
     // Recorre el archivo filename por cada byte escribe su código en filename+".huf"
     public void escribirContenido(String filename, HuffmanTable[] arr){
+        long iT = System.currentTimeMillis();
         try {
             InputStream iStream = new FileInputStream(filename);
             BufferedInputStream buffInpStream = new BufferedInputStream(iStream);
@@ -296,6 +312,8 @@ public class CompressorImple implements Compresor {
             iStream.close();
 
             console.println(MessageReplacer.replaceInfoMessage("Contenidos escritos con éxito!"));
+            long fT = System.currentTimeMillis();
+            console.println(MessageReplacer.replaceInfoMessage("Contenidos escritos en " + (fT-iT) + " milisegundos."));
             console.println(MessageReplacer.replaceInfoMessage("Archivo comprimido con éxito!"));
             console.println(MessageReplacer.replaceInfoMessage("Proceso finalizado, presione cualquier tecla..."));
             console.pressAnyKey();

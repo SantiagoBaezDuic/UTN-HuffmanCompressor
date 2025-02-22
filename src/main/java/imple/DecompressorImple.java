@@ -14,6 +14,7 @@ public class DecompressorImple implements Descompresor {
     Console console = Console.get();
 
     public long recomponerArbol(String filename, HuffmanInfo arbol){
+        long iT = System.currentTimeMillis();
         String message = "Recomponiendo árbol: %";
         console.println(MessageReplacer.replaceProgressMessage(message, 0));
         long headerLength = 0;
@@ -78,12 +79,15 @@ public class DecompressorImple implements Descompresor {
             bStream.close();
             iStream.close();
             console.println(MessageReplacer.replaceInfoMessage("Árbol recompuesto con éxito!"));
+            long fT = System.currentTimeMillis();
+            console.println(MessageReplacer.replaceInfoMessage("Árbol recompuesto en " + (fT-iT) + " milisegundos."));
         } catch (IOException err) {
             System.out.println(MessageReplacer.replaceInfoMessage("Error composing tree: " + err.getMessage()));
         }
         return headerLength;
     }
     public void descomprimirArchivo(HuffmanInfo root,long n,String filename){
+        long iT = System.currentTimeMillis();
         String message = "Descomprimiendo archivo: %";
         console.println(MessageReplacer.replaceProgressMessage(message, 0));
         try{
@@ -133,6 +137,8 @@ public class DecompressorImple implements Descompresor {
             buffInpStream.close();
             iStream.close();
             console.println(MessageReplacer.replaceInfoMessage("Archivo descomprimido con éxito!"));
+            long fT = System.currentTimeMillis();
+            console.println(MessageReplacer.replaceInfoMessage("Archivo descomprimido en " + ((fT-iT) / 1000) + " segundos."));
             console.println(MessageReplacer.replaceInfoMessage("Proceso finalizado, presione cualquier tecla..."));
             console.pressAnyKey();
             console.closeAndExit();
