@@ -32,7 +32,7 @@ public class DecompressorImple implements Descompresor {
 
             long progress = 0;
 
-            int auxID = 256;
+            int auxID = 256; //Auxiliar para los nodos *
             for (int i = 0; i < leavesAmount; i++){
                 long percentage = ((i + 1) * 100) / leavesAmount;
                 if (percentage > progress){
@@ -40,19 +40,18 @@ public class DecompressorImple implements Descompresor {
                     progress = percentage;
                 }
 
-                int node1 = bStream.read();
-                int node2 = bStream.read();
-                long byteAmount = (node2 / 8) + 2;
-                headerLength += byteAmount;
+                int character = bStream.read(); //Leo C
+                int rawCodLength = bStream.read(); //Leo H
+                headerLength += (rawCodLength / 8) + 2;
                 StringBuilder cod = new StringBuilder();
 
-                for (int x = 0; x < node2; x++){
+                for (int x = 0; x < rawCodLength; x++){ //Leo todos los bits del código Huffman y los agrego al string
                     int bit = reader.readBit();
                     cod.append(bit);
                 }
 
                 HuffmanInfo aux = arbol;
-                for (int x = 0; x < node2; x++){
+                for (int x = 0; x < rawCodLength; x++){ //Rearmo el camino moviéndome a izquierda o derecha según el bit
                     char bit = cod.charAt(x);
                     if (bit == '1'){
                         if (aux.getRight() == null){
@@ -70,8 +69,8 @@ public class DecompressorImple implements Descompresor {
                         aux = aux.getLeft();
                     }
                 }
-                aux.setC(node1);
-                if (node2 % 8 != 0){
+                aux.setC(character);
+                if (rawCodLength % 8 != 0){
                     headerLength++;
                     reader.flush();
                 }
@@ -95,6 +94,7 @@ public class DecompressorImple implements Descompresor {
             OutputStream oStream = new FileOutputStream(originalFilename);
             BufferedOutputStream bStream = new BufferedOutputStream(oStream);
 
+            //Leemos los bytes que almacenan la longitud del archivo original
             int oLength;
             byte[] readByteLength = new byte[4];
             buffInpStream.read(readByteLength);
@@ -105,7 +105,7 @@ public class DecompressorImple implements Descompresor {
             int bit = reader.readBit();
 
             long decompressedFileLength = 0;
-            HuffmanInfo huffInfoAux = root;
+            HuffmanInfo huffInfoAux = root; //Auxiliar para moverse por el árbol
 
             long progress = 0;
 
@@ -115,7 +115,7 @@ public class DecompressorImple implements Descompresor {
                 } else {
                     huffInfoAux = huffInfoAux.getLeft();
                 }
-                if (huffInfoAux.getC() <= 255){
+                if (huffInfoAux.getC() <= 255){ //Si es una hoja
                     int c = huffInfoAux.getC();
                     bStream.write(c);
                     decompressedFileLength++;
@@ -124,7 +124,7 @@ public class DecompressorImple implements Descompresor {
                         console.println(MessageReplacer.replaceProgressMessage(message, percentage));
                         progress = percentage;
                     }
-                    huffInfoAux = root;
+                    huffInfoAux = root; //Me vuelvo a parar en la raíz
                 }
                 bit = reader.readBit();
             }
